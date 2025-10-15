@@ -45,5 +45,40 @@ int main() {
         std::cout << "Failed to load ROM." << std::endl;
     }
 
+    // New: Test keypad
+    emulator.keypad[1] = 1;  // Press key '1'
+    std::cout << "Keypad[1] pressed: " << static_cast<int>(emulator.keypad[1]) << std::endl;
+
+    // Test display
+    emulator.gfx[0] = 0xFFFFFFFF;  // Set top-left pixel 'on'
+    emulator.gfx[64 * 31 + 63] = 0xFFFFFFFF;  // Bottom-right
+    std::cout << "GFX[0]: 0x" << std::hex << emulator.gfx[0] << std::endl;
+    std::cout << "GFX[last]: 0x" << std::hex << emulator.gfx[64 * 31 + 63] << std::endl;
+
+    emulator.drawFlag = true;
+    std::cout << "Draw flag: " << emulator.drawFlag << std::endl;
+
+    // Test RNG
+    /*for (int i = 0; i < 5; ++i) {
+        uint8_t randVal = static_cast<uint8_t>(emulator.randByte(emulator.randGen));
+        std::cout << "Random byte " << i << ": 0x" << std::hex << static_cast<int>(randVal) << std::endl;
+    }*/
+    for (int i = 0; i < 5; ++i) {
+        uint8_t randVal = static_cast<uint8_t>(emulator.randByte(emulator.randGen));
+        std::cout << "Random byte " << i << ": " << std::dec << static_cast<int>(randVal)
+            << " (decimal) / 0x" << std::hex << static_cast<int>(randVal) << " (hex)" << std::endl;
+    }
+
+    std::cout << "RNG Seed: " << emulator.rngSeed << std::endl;
+
+    // Test Cycle
+    if (emulator.LoadROM("IBMTest.ch8")) {
+        for (int i = 0; i < 5; ++i) {  // Run 5 cycles
+            emulator.Cycle();
+            std::cout << "Cycle " << i << " - Opcode: 0x" << std::hex << emulator.opcode
+                << " PC: 0x" << emulator.pc << std::endl;
+        }
+    }
+
     return 0;
 }

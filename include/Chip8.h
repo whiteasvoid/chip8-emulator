@@ -4,6 +4,7 @@
 #include <chrono>
 
 // http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
+// https://chip-8.github.io/links/
 class Chip8 {
 public:
 
@@ -53,6 +54,7 @@ public:
 	std::uniform_int_distribution<unsigned short> randByte;    // Random byte (0-255) generator
 
 private:
+    // https://johnearnest.github.io/Octo/docs/chip8ref.pdf
     // Opcode handlers (placeholders)
     void OP_0nnn();
     void OP_1nnn();

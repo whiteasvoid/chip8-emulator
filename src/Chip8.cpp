@@ -1,5 +1,6 @@
 #include "../include/Chip8.h"
 #include <iostream>
+#include <algorithm>
 
 /*
 Each font sprite is 4 pixels wide and 5 pixels tall.
@@ -73,6 +74,12 @@ bool Chip8::LoadROM(const std::string filename) {
     return true;
 }
 
+/* Cycle explanation:
+* Fetch: Read 2 bytes from memory[pc] and memory[pc+1] into opcode.
+* Increment PC by 2 (now points to next potential opcode).
+* Decode: Use switch statements on parts of opcode (example, first nibble) to call the right handler (like OP_0nnn() for 0x0***).
+* Execute: Run the handlers logic (example, for 00E0, clear gfx[]).
+*/
 void Chip8::Cycle() {
     // Combine two bytes into opcode
     opcode = (memory[pc] << 8) | memory[pc + 1];
@@ -138,14 +145,38 @@ void Chip8::Cycle() {
     }
 }
 
+// https://johnearnest.github.io/Octo/docs/chip8ref.pdf
 // Stub implementations for all opcode handlers
-void Chip8::OP_0nnn() { /* Sys call, clear, or return - to implement */ }
-void Chip8::OP_1nnn() { /* Jump to nnn */ }
+void Chip8::OP_0nnn() {
+    switch (opcode & 0x0FFF) {  // Look at last 12 bits
+    case 0x0E0:  // 00E0: Clear screen
+        std::fill(std::begin(gfx), std::end(gfx), 0);  // Set all pixels to 0 (off)
+        drawFlag = true;
+        break;
+    case 0x0EE:  // 00EE: Return from subroutine
+        if (sp > 0) {
+            --sp;
+            pc = stack[sp];  // Pop PC from stack
+        }
+        break;
+    default:
+        // Ignore or log old SYS calls (0nnn for nnn != 0)
+        break;
+    }
+}
+// Jump to address nnn (1nnn)
+void Chip8::OP_1nnn() {
+    pc = opcode & 0x0FFF;  // Set PC to nnn (no +2 since we already incremented)
+}
 void Chip8::OP_2nnn() { /* Call subroutine at nnn */ }
 void Chip8::OP_3xnn() { /* Skip if VX == nn */ }
 void Chip8::OP_4xnn() { /* Skip if VX != nn */ }
 void Chip8::OP_5xy0() { /* Skip if VX == VY */ }
-void Chip8::OP_6xnn() { /* Set VX to nn */ }
+// Set VX = nn (6xnn)
+void Chip8::OP_6xnn() {
+    uint8_t x = (opcode & 0x0F00) >> 8;
+    registers[x] = opcode & 0x00FF;
+}
 void Chip8::OP_7xnn() { /* Add nn to VX */ }
 void Chip8::OP_8xy0() { /* Set VX = VY */ }
 void Chip8::OP_8xy1() { /* Set VX = VX | VY */ }
@@ -157,7 +188,10 @@ void Chip8::OP_8xy6() { /* Shift VX right, VF LSB */ }
 void Chip8::OP_8xy7() { /* Set VX = VY - VX, VF borrow */ }
 void Chip8::OP_8xyE() { /* Shift VX left, VF MSB */ }
 void Chip8::OP_9xy0() { /* Skip if VX != VY */ }
-void Chip8::OP_Annn() { /* Set I to nnn */ }
+// Set I = nnn (Annn)
+void Chip8::OP_Annn() {
+    index = opcode & 0x0FFF;
+}
 void Chip8::OP_Bnnn() { /* Jump to nnn + V0 */ }
 void Chip8::OP_Cxnn() { /* Set VX to random & nn */ }
 void Chip8::OP_Dxyn() { /* Draw sprite at (VX,VY) height n */ }

@@ -80,5 +80,23 @@ int main() {
         }
     }
 
+    // Test clear screen
+    emulator.pc = 0x200;
+    emulator.memory[0x200] = 0x00; emulator.memory[0x201] = 0xE0;  // 00E0
+    // 0x00 is the high byte (first byte) of the 2-byte opcode.
+    // 0xE0 is the low byte (second byte).
+    emulator.Cycle();
+    std::cout << "After clear: drawFlag = " << emulator.drawFlag << " (should be 1)" << std::endl;
+
+    std::cout << emulator.pc << std::endl;
+
+    // Test jump
+    emulator.pc = 0x200;
+    emulator.memory[0x200] = 0x12; emulator.memory[0x201] = 0x34;  // 1234 jump to 0x234
+	// jump format: 1nnn (1 from 1234)
+    // target address: 0x234
+    emulator.Cycle();
+    std::cout << "After jump: PC = 0x" << std::hex << emulator.pc << " (should be 234)" << std::endl;
+
     return 0;
 }
